@@ -16,6 +16,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text;
 
 namespace CacheSample.Web
 {
@@ -41,6 +43,9 @@ namespace CacheSample.Web
                 // ExpirationScanFrequency= TimeSpan.FromSeconds(5), // 设置扫描过期项的时间间隔
                 // CompactionPercentage=1024, // 设置在超出最大大小时要压缩的缓存量
             });
+
+            // 启用Redis
+            services.AddRedisCache();
         }
 
         public void ConfigureContainer(ContainerBuilder builder)
@@ -55,7 +60,7 @@ namespace CacheSample.Web
             builder.RegisterType<CacheableInterceptor>();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime, IDistributedCache cache)
         {
             if (env.IsDevelopment())
             {
@@ -63,6 +68,15 @@ namespace CacheSample.Web
             }
 
             this.AutofacContainer = app.ApplicationServices.GetAutofacRoot();
+
+            lifetime.ApplicationStarted.Register(() =>
+            {
+                var currentTime = DateTime.Now.ToString();
+                byte[] encodedCurrentTime = Encoding.UTF8.GetBytes(currentTime);
+                var options = new DistributedCacheEntryOptions()
+                              .SetSlidingExpiration(TimeSpan.FromSeconds(20));
+                cache.Set("cachedTime", encodedCurrentTime, options);
+            });
 
             app.UseHttpsRedirection();
 

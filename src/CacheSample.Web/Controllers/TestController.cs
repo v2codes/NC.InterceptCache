@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using CacheSample.Web.BizServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -34,7 +35,7 @@ namespace CacheSample.Web.Controllers
             var testString = _service.GetByIdWithCache(testKey.ToString());
             //var testString2 = _service.GetByIdIgnoreCache(testKey.ToString());
 
-            Console.WriteLine("GetByIdWithCache：", testString);
+            Console.WriteLine("GetByIdWithCache：{0}", JsonSerializer.Serialize(testString));
             //Console.WriteLine("GetByIdIgnoreCache：", testString2);
             return Ok(testString);
         }

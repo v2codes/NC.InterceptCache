@@ -1,8 +1,5 @@
-﻿using NC.InterceptorCache;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System;
+using NC.InterceptorCache.Attributes;
 
 namespace CacheSample.Web.BizServices
 {
@@ -17,9 +14,10 @@ namespace CacheSample.Web.BizServices
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
+        [MemoryCacheOptions(10, -1, "m_", "描述balabala....")]
+        [RedisCacheOptions(10, -1, "r_", "描述balabala....")]
         public virtual object GetByIdWithCache(string id)
         {
-            Console.WriteLine("GetById 执行中：{0}", id);
             return new { Id = id, Name = $"Name_{id}" };
         }
 
@@ -31,7 +29,6 @@ namespace CacheSample.Web.BizServices
         [IgnoreCache]
         public virtual object GetByIdIgnoreCache(string id)
         {
-            Console.WriteLine("IgnoreCache 执行中：{0}", id);
             return new { Id = id, Name = $"Name_{id}" };
         }
     }
