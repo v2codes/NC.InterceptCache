@@ -79,8 +79,8 @@ namespace NC.InterceptorCache
             //存入缓存
             if (!string.IsNullOrWhiteSpace(memoryCacheKey))
             {
-                Console.WriteLine("写入缓存...");
 
+                Console.WriteLine("写入本地缓存...");
                 // 写入本地缓存
                 var entryOptions = new MemoryCacheEntryOptions()
                                    .SetSize(1)
@@ -92,12 +92,13 @@ namespace NC.InterceptorCache
                 }
                 _memoryCache.Set(memoryCacheKey, invocation.ReturnValue, entryOptions);
 
+                Console.WriteLine("写入Redis缓存...");
                 // 写入Redis缓存
                 var redisEntryOptions = new DistributedCacheEntryOptions()
                 {
                     SlidingExpiration = TimeSpan.FromSeconds((double)redisOptions.SlidingExpiration)
                 };
-                if (redisOptions.SlidingExpiration > 0)
+                if (redisOptions.AbsoluteExpiration > 0)
                 {
                     redisEntryOptions.SetAbsoluteExpiration(DateTime.Now.AddSeconds((double)redisOptions.AbsoluteExpiration));
                 }
@@ -163,3 +164,107 @@ namespace NC.InterceptorCache
         }
     }
 }
+
+
+// 基于 abp 拦截器的缓存key生成示例
+///// <summary>
+///// 缓存 Key 生成工具（IAbpMethodInvocation 扩展）
+///// </summary>
+//public static class CacheKeyGeneratorExtension
+//{
+//    // 分隔符
+//    private static string Separator = ":";
+
+//    /// <summary>
+//    /// 生成缓存 Key
+//    /// </summary>
+//    /// <param name="invocation">拦截装载对象</param>
+//    /// <param name="keyPrefix">自定义 Key 前缀</param>
+//    /// <returns></returns>
+//    public static string GetCacheKey(this IAbpMethodInvocation invocation, string keyPrefix)
+//    {
+//        var typeName = invocation.Method.DeclaringType?.Name;
+//        var methodName = invocation.Method.Name;
+
+//        if (!string.IsNullOrWhiteSpace(keyPrefix))
+//        {
+//            return $"{keyPrefix}{Separator}";
+//        }
+
+//        return $"{typeName}{Separator}{methodName}{Separator}";
+//    }
+
+//    /// <summary>
+//    /// 生成缓存 Key
+//    /// 方法参数参与生成该Key，默认取3个参数
+//    /// </summary>
+//    /// <param name="invocation">拦截装载对象</param>
+//    /// <param name="keyPrefix">自定义 Key 前缀</param>
+//    /// <returns></returns>
+//    public static string GetCacheKeyWithArgs(this IAbpMethodInvocation invocation, string keyPrefix)
+//    {
+//        var arguments = invocation.Arguments.Take(5).ToArray();
+//        return invocation.GetCacheKey(keyPrefix, arguments);
+//    }
+
+//    /// <summary>
+//    /// 生成缓存 Key
+//    /// </summary>
+//    /// <param name="invocation">拦截装载对象</param>
+//    /// <param name="keyPrefix">前缀</param>
+//    /// <param name="parameters">自定义前缀字符串数组，使用分隔符分割并拼接</param>
+//    /// <returns></returns>
+//    public static string GetCacheKey(this IAbpMethodInvocation invocation, string keyPrefix, IEnumerable<string> parameters)
+//    {
+//        var cacheKeyPrefix = invocation.GetCacheKey(keyPrefix);
+
+//        var builder = new StringBuilder();
+//        builder.Append(cacheKeyPrefix);
+//        builder.Append(string.Join(Separator, parameters));
+//        return builder.ToString();
+//    }
+
+//    /// <summary>
+//    /// 生成缓存 Key
+//    /// </summary>
+//    /// <param name="invocation">拦截装载对象</param>
+//    /// <param name="prefix">前缀</param>
+//    /// <param name="args">自定义前缀字对象数组，视情况取值或转换后，使用分隔符分割并拼接</param>
+//    /// <returns></returns>
+//    public static string GetCacheKey(this IAbpMethodInvocation invocation, string prefix, object[] args)
+//    {
+//        var method = invocation.Method;
+//        var methodArguments = args?.Any() == true
+//                                  ? args.Select(GenerateCacheKey)
+//                                  : new[] { "0" };
+
+//        return invocation.GetCacheKey(prefix, methodArguments);
+//    }
+
+//    /// <summary>
+//    /// 格式化参数
+//    /// </summary>
+//    /// <param name="parameter"></param>
+//    /// <returns></returns>
+//    private static string GenerateCacheKey(object parameter)
+//    {
+//        if (parameter == null) return string.Empty;
+//        //if (parameter is ICachable cachable) return cachable.CacheKey;
+//        if (parameter is string key) return key;
+//        if (parameter is DateTime dateTime) return dateTime.ToString("O");
+//        if (parameter is DateTimeOffset dateTimeOffset) return dateTimeOffset.ToString("O");
+//        if (parameter is IEnumerable enumerable) return GenerateCacheKey(enumerable.Cast<object>());
+//        return parameter.ToString();
+//    }
+
+//    /// <summary>
+//    /// 格式化列表类型参数
+//    /// </summary>
+//    /// <param name="parameter"></param>
+//    /// <returns></returns>
+//    private static string GenerateCacheKey(IEnumerable<object> parameter)
+//    {
+//        if (parameter == null) return string.Empty;
+//        return "[" + string.Join(",", parameter) + "]";
+//    }
+//}
